@@ -1,4 +1,4 @@
-const { montarUrl, autenticacao, requisitar, lerJson } = require('../util/youtubeClient');
+const { criarErro, montarUrl, autenticacao, requisitar, lerJson } = require('../util/youtubeClient');
 
 async function buscarDadosCanal(idCanal, tokenAcesso) {
   const url = montarUrl('channels', {
@@ -13,11 +13,15 @@ async function buscarDadosCanal(idCanal, tokenAcesso) {
 }
 
 async function atualizarDadosCanal(idCanal, dados, tokenAcesso) {
+  if (!tokenAcesso) {
+    throw criarErro('Atualizar o canal exige um token OAuth 2.0.', 401);
+  }
+
   const partesAtualizaveis = ['brandingSettings', 'localizations', 'snippet'];
   const partes = Object.keys(dados).filter(parte => partesAtualizaveis.includes(parte));
 
   if (partes.length === 0) {
-    throw new Error('Nenhuma configuração atualizável do canal foi informada.');
+    throw criarErro('Nenhuma configuração atualizável do canal foi informada.', 400);
   }
 
   const url = montarUrl('channels', {

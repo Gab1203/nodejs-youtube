@@ -94,6 +94,50 @@ const swagger = {
           '503': erro('Configuração ausente no .env'),
           '504': erro('Tempo esgotado')
         }
+      },
+      put: {
+        tags: ['channels'],
+        summary: 'Atualizar canal (channels.update)',
+        description: 'Exige token OAuth 2.0 do proprietário do canal.',
+        security: comOAuth,
+        parameters: [{
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'string' },
+          example: 'UC_x5XG1OV2P6uZZ5FSM9Ttw'
+        }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                minProperties: 1,
+                additionalProperties: false,
+                properties: {
+                  brandingSettings: { type: 'object' },
+                  localizations: { type: 'object' },
+                  snippet: { type: 'object' }
+                }
+              },
+              example: {
+                brandingSettings: {
+                  channel: { description: 'Descrição atualizada do canal' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Canal atualizado' },
+          '400': erro('ID ou partes do canal inválidos'),
+          '401': erro('Token OAuth ausente ou inválido'),
+          '403': erro('Sem permissão para atualizar o canal'),
+          '502': erro('Falha na API do YouTube'),
+          '503': erro('Configuração ausente no .env'),
+          '504': erro('Tempo esgotado')
+        }
       }
     },
     '/api/videos': {
