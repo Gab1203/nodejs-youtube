@@ -27,4 +27,18 @@ async function buscarDados(req, res) {
   }
 }
 
-module.exports = { buscarDados };
+async function atualizarDados(req, res) {
+    try{
+        const idCanal = lerId(req.params.id);
+        const dados = req.body;
+        return res.json(await channelService.atualizarDadosCanal(idCanal, dados, lerToken(req)));
+
+    }catch (erro) {
+        const status = Number.isInteger(erro.status)
+            ? erro.status
+            : erro.name === 'TimeoutError' ? 504 : 502;
+        return res.status(status).json({ error: erro.message });
+    }
+}
+
+module.exports = { buscarDados, atualizarDados };
