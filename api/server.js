@@ -4,6 +4,7 @@ const express = require('express');
 
 const feedController = require('./controller/feedController');
 const videoController = require('./controller/videoController');
+const channelController = require('./controller/channelController');
 const configSwagger = require('./util/swaggerConfig');
 
 const app = express();
@@ -14,6 +15,9 @@ configSwagger(app);
 // Rota de search
 app.get('/api/search', feedController.buscarVideos);
 app.get('/api/feed/popular', feedController.listarPopulares);
+
+// Rota de canais (YouTube Data API v3 - recurso channels)
+app.get('/api/channels/:id', channelController.buscarDados);
 
 // Rotas de vídeos (YouTube Data API v3 - recurso videos)
 app.get('/api/videos/:id', videoController.buscarPorId);              // videos.list

@@ -72,6 +72,30 @@ const swagger = {
         responses: { '200': { description: 'Resultados da busca' } }
       }
     },
+    '/api/channels/{id}': {
+      get: {
+        tags: ['channels'],
+        summary: 'Buscar canal por ID (channels.list)',
+        description: 'Se um token OAuth 2.0 for enviado no cabeçalho Authorization: Bearer, ele será usado; caso contrário, utiliza YOUTUBE_API_KEY para canais públicos.',
+        security: [{ bearerAuth: [] }, {}],
+        parameters: [{
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'string' },
+          example: 'UC_x5XG1OV2P6uZZ5FSM9Ttw'
+        }],
+        responses: {
+          '200': { description: 'Resposta channels.list' },
+          '400': erro('ID do canal inválido'),
+          '401': erro('Token OAuth ausente ou inválido'),
+          '403': erro('Sem permissão no YouTube'),
+          '502': erro('Falha na API do YouTube'),
+          '503': erro('Configuração ausente no .env'),
+          '504': erro('Tempo esgotado')
+        }
+      }
+    },
     '/api/videos': {
       post: {
         tags: ['videos'],
