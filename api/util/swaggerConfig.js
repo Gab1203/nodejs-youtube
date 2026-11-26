@@ -13,6 +13,12 @@ const parametroIds = {
   description: 'Um ou mais IDs (até 50) separados por vírgula.'
 };
 
+const parametroUsuarioId = {
+  ...parametroId,
+  description: 'ID ou nome de usuario do YouTube.',
+  example: 'GoogleDevelopers'
+};
+
 const erro = (description) => ({
   description,
   content: { 'application/json': { schema: { $ref: '#/components/schemas/Erro' } } }
@@ -27,6 +33,30 @@ const errosComuns = {
   '503': erro('Configuração ausente no .env'),
   '504': erro('Tempo esgotado')
 };
+
+const errosUsuario = {
+  '400': erro('ID do usu\u00e1rio inv\u00e1lido'),
+  '403': erro('Sem permiss\u00e3o para acessar os dados do usu\u00e1rio'),
+  '404': erro('Usu\u00e1rio ou recurso n\u00e3o encontrado'),
+  '502': erro('Falha na API do YouTube'),
+  '503': erro('Chave de desenvolvedor ausente'),
+  '504': erro('Tempo esgotado')
+};
+
+const parametrosListaUsuario = [
+  {
+    name: 'max-results',
+    in: 'query',
+    description: 'Limite de resultados retornados pela API v2.',
+    schema: { type: 'integer', minimum: 1, maximum: 50 }
+  },
+  {
+    name: 'start-index',
+    in: 'query',
+    description: '\u00cdndice inicial da pagina\u00e7\u00e3o.',
+    schema: { type: 'integer', minimum: 1 }
+  }
+];
 
 const comOAuth = [{ bearerAuth: [] }];
 
@@ -137,6 +167,62 @@ const swagger = {
           '502': erro('Falha na API do YouTube'),
           '503': erro('Configuração ausente no .env'),
           '504': erro('Tempo esgotado')
+        }
+      }
+    },
+    '/api/users/{id}': {
+      get: {
+        tags: ['users'],
+        summary: 'Consultar perfil do usu\u00e1rio',
+        description: 'Retorna o perfil p\u00fablico do usu\u00e1rio na YouTube Data API v2.',
+        parameters: [parametroUsuarioId],
+        responses: {
+          '200': { description: 'Perfil do usu\u00e1rio' },
+          ...errosUsuario
+        }
+      }
+    },
+    '/api/users/{id}/favorites': {
+      get: {
+        tags: ['users'],
+        summary: 'Listar v\u00eddeos favoritos do usu\u00e1rio',
+        parameters: [parametroUsuarioId, ...parametrosListaUsuario],
+        responses: {
+          '200': { description: 'V\u00eddeos favoritos do usu\u00e1rio' },
+          ...errosUsuario
+        }
+      }
+    },
+    '/api/users/{id}/playlists': {
+      get: {
+        tags: ['users'],
+        summary: 'Listar playlists do usu\u00e1rio',
+        parameters: [parametroUsuarioId, ...parametrosListaUsuario],
+        responses: {
+          '200': { description: 'Playlists do usu\u00e1rio' },
+          ...errosUsuario
+        }
+      }
+    },
+    '/api/users/{id}/uploads': {
+      get: {
+        tags: ['users'],
+        summary: 'Listar v\u00eddeos enviados pelo usu\u00e1rio',
+        parameters: [parametroUsuarioId, ...parametrosListaUsuario],
+        responses: {
+          '200': { description: 'V\u00eddeos enviados pelo usu\u00e1rio' },
+          ...errosUsuario
+        }
+      }
+    },
+    '/api/users/{id}/new-subscription-videos': {
+      get: {
+        tags: ['users'],
+        summary: 'Listar v\u00eddeos recentes das inscri\u00e7\u00f5es do usu\u00e1rio',
+        parameters: [parametroUsuarioId, ...parametrosListaUsuario],
+        responses: {
+          '200': { description: 'V\u00eddeos recentes das inscri\u00e7\u00f5es' },
+          ...errosUsuario
         }
       }
     },
