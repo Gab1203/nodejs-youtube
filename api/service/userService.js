@@ -10,24 +10,27 @@ function consultarUsuario(metodo, id, parametros, callback) {
     throw new TypeError('callback must be a function');
   }
 
-  const campos = {};
-  let chaveTemporaria;
+  const chave = process.env.YOUTUBE_API_KEY && process.env.YOUTUBE_API_KEY.trim();
+  if (!chave) {
+    const erro = new Error('developer key missing');
+    erro.origin = 'api';
+    callback(erro);
+    return;
+  }
 
+  const campos = {};
   if (parametros && typeof parametros === 'object' && !Array.isArray(parametros)) {
     Object.keys(parametros).forEach(function (campo) {
-      if (campo === 'key') {
-        chaveTemporaria = parametros[campo];
-      } else {
+      if (campo !== 'key') {
         campos[campo] = parametros[campo];
       }
     });
   }
 
   const chaveOriginal = youtube.developerKey;
-
-  if (chaveTemporaria) {
-    youtube.developerKey = chaveTemporaria;
-  }
+  const protocoloOriginal = youtube.httpProtocol;
+  youtube.developerKey = chave;
+  youtube.httpProtocol = 'https';
 
   try {
     const usuario = youtube.user(id);
@@ -39,6 +42,7 @@ function consultarUsuario(metodo, id, parametros, callback) {
     }
   } finally {
     youtube.developerKey = chaveOriginal;
+    youtube.httpProtocol = protocoloOriginal;
   }
 }
 
