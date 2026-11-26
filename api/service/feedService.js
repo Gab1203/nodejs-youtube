@@ -7,7 +7,14 @@ async function buscarVideos(q) {
     throw erro;
   }
 
-  const url = new URL('https://www.googleapis.com/youtube/v3/search');
+  const urlBase = process.env.YOUTUBE_API_BASE_URL;
+  if (!urlBase || !urlBase.trim()) {
+    const erro = new Error('Configure YOUTUBE_API_BASE_URL no .env.');
+    erro.status = 503;
+    throw erro;
+  }
+
+  const url = new URL('search', urlBase.trim());
   url.searchParams.set('part', 'snippet');
   url.searchParams.set('type', 'video');
   url.searchParams.set('q', q);
