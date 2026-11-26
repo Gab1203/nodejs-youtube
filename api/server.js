@@ -21,12 +21,23 @@ app.get('/api/feed/popular', feedController.listarPopulares);
 app.get('/api/channels/:id', channelController.buscarDados);
 app.put('/api/channels/:id', json, channelController.atualizarDados);
 
-// Rotas de usuarios
-app.get('/api/users/:id', userController.profile);
-app.get('/api/users/:id/favorites', userController.favorites);
-app.get('/api/users/:id/playlists', userController.playlists);
-app.get('/api/users/:id/uploads', userController.uploads);
-app.get('/api/users/:id/new-subscription-videos', userController.newSubscriptionVideos);
+// Rotas da conta autenticada (YouTube Data API v3)
+app.get('/api/users/me/channels', userController.channels);
+app.get('/api/users/me/subscriptions', userController.subscriptions);
+app.post('/api/users/me/subscriptions', json, userController.inscrever);
+app.delete('/api/users/me/subscriptions/:id', userController.cancelarInscricao);
+app.get('/api/users/me/subscribers', userController.inscritos);
+app.get('/api/users/me/videos', userController.videosAvaliados);
+app.get('/api/users/me/playlists', userController.playlists);
+app.get('/api/users/me/activities', userController.activities);
+app.get('/api/users/me/uploads', userController.uploads);
+app.get('/api/users/me/members', userController.members);
+
+// Comentários: publicar, responder, editar e excluir.
+app.post('/api/videos/:id/comments', json, userController.publicarComentario);
+app.post('/api/comments/:id/replies', json, userController.responderComentario);
+app.put('/api/comments/:id', json, userController.editarComentario);
+app.delete('/api/comments/:id', userController.excluirComentario);
 
 // Rotas de vídeos (YouTube Data API v3 - recurso videos)
 app.get('/api/videos/:id', videoController.buscarPorId);              // videos.list

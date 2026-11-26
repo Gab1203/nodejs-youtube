@@ -13,12 +13,6 @@ const parametroIds = {
   description: 'Um ou mais IDs (até 50) separados por vírgula.'
 };
 
-const parametroUsuarioId = {
-  ...parametroId,
-  description: 'ID ou nome de usuario do YouTube.',
-  example: 'GoogleDevelopers'
-};
-
 const erro = (description) => ({
   description,
   content: { 'application/json': { schema: { $ref: '#/components/schemas/Erro' } } }
@@ -35,26 +29,27 @@ const errosComuns = {
 };
 
 const errosUsuario = {
-  '400': erro('ID do usu\u00e1rio inv\u00e1lido'),
+  '400': erro('Parâmetros inválidos'),
+  '401': erro('Token OAuth ausente ou inválido'),
   '403': erro('Sem permiss\u00e3o para acessar os dados do usu\u00e1rio'),
   '404': erro('Usu\u00e1rio ou recurso n\u00e3o encontrado'),
   '502': erro('Falha na API do YouTube'),
-  '503': erro('Chave de desenvolvedor ausente'),
+  '503': erro('Configuração ausente no .env'),
   '504': erro('Tempo esgotado')
 };
 
 const parametrosListaUsuario = [
   {
-    name: 'max-results',
+    name: 'maxResults',
     in: 'query',
-    description: 'Limite de resultados retornados pela API v2.',
+    description: 'Limite de resultados por página da API v3.',
     schema: { type: 'integer', minimum: 1, maximum: 50 }
   },
   {
-    name: 'start-index',
+    name: 'pageToken',
     in: 'query',
-    description: '\u00cdndice inicial da pagina\u00e7\u00e3o.',
-    schema: { type: 'integer', minimum: 1 }
+    description: 'Token retornado para solicitar a próxima página.',
+    schema: { type: 'string' }
   }
 ];
 
@@ -170,60 +165,176 @@ const swagger = {
         }
       }
     },
-    '/api/users/{id}': {
+    '/api/users/me/channels': {
       get: {
         tags: ['users'],
-        summary: 'Consultar perfil do usu\u00e1rio',
-        description: 'Retorna o perfil p\u00fablico do usu\u00e1rio na YouTube Data API v2.',
-        parameters: [parametroUsuarioId],
-        responses: {
-          '200': { description: 'Perfil do usu\u00e1rio' },
-          ...errosUsuario
-        }
+        summary: 'Consultar canal e perfil da conta autenticada',
+        description: 'Mapeia para channels.list?mine=true. Exige OAuth; YOUTUBE_API_KEY, sozinha, não autoriza dados da conta.',
+        security: comOAuth,
+        responses: { '200': { description: 'Canal, perfil e playlists relacionadas' }, ...errosUsuario }
       }
     },
-    '/api/users/{id}/favorites': {
+    '/api/users/me/subscriptions': {
       get: {
         tags: ['users'],
-        summary: 'Listar v\u00eddeos favoritos do usu\u00e1rio',
-        parameters: [parametroUsuarioId, ...parametrosListaUsuario],
-        responses: {
-          '200': { description: 'V\u00eddeos favoritos do usu\u00e1rio' },
-          ...errosUsuario
-        }
+        summary: 'Listar canais inscritos pela conta autenticada',
+        description: 'Mapeia para subscriptions.list?mine=true.',
+        security: comOAuth,
+        parameters: parametrosListaUsuario,
+        responses: { '200': { description: 'Inscrições da conta' }, ...errosUsuario }
+      },
+      post: {
+        tags: ['users'],
+        summary: 'Inscrever a conta em um canal',
+        description: 'Mapeia para subscriptions.insert e exige OAuth.',
+        security: comOAuth,
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object', required: ['channelId'],
+                properties: { channelId: { type: 'string', example: 'UC_x5XG1OV2P6uZZ5FSM9Ttw' } }
+              }
+            }
+          }
+        },
+        responses: { '201': { description: 'Inscrição criada' }, ...errosUsuario }
       }
     },
-    '/api/users/{id}/playlists': {
-      get: {
+    '/api/users/me/subscriptions/{id}': {
+      delete: {
         tags: ['users'],
-        summary: 'Listar playlists do usu\u00e1rio',
-        parameters: [parametroUsuarioId, ...parametrosListaUsuario],
-        responses: {
-          '200': { description: 'Playlists do usu\u00e1rio' },
-          ...errosUsuario
-        }
+        summary: 'Cancelar inscrição',
+        description: 'Mapeia para subscriptions.delete. O ID é o ID do recurso de inscrição, não o ID do canal.',
+        security: comOAuth,
+        parameters: [parametroId],
+        responses: { '204': { description: 'Inscrição removida' }, ...errosUsuario }
       }
     },
-    '/api/users/{id}/uploads': {
+    '/api/users/me/subscribers': {
       get: {
         tags: ['users'],
-        summary: 'Listar v\u00eddeos enviados pelo usu\u00e1rio',
-        parameters: [parametroUsuarioId, ...parametrosListaUsuario],
-        responses: {
-          '200': { description: 'V\u00eddeos enviados pelo usu\u00e1rio' },
-          ...errosUsuario
-        }
+        summary: 'Listar inscritos do canal da conta autenticada',
+        description: 'Mapeia para subscriptions.list?mySubscribers=true.',
+        security: comOAuth,
+        parameters: parametrosListaUsuario,
+        responses: { '200': { description: 'Inscritos do canal' }, ...errosUsuario }
       }
     },
-    '/api/users/{id}/new-subscription-videos': {
+    '/api/users/me/videos': {
       get: {
         tags: ['users'],
-        summary: 'Listar v\u00eddeos recentes das inscri\u00e7\u00f5es do usu\u00e1rio',
-        parameters: [parametroUsuarioId, ...parametrosListaUsuario],
-        responses: {
-          '200': { description: 'V\u00eddeos recentes das inscri\u00e7\u00f5es' },
-          ...errosUsuario
-        }
+        summary: 'Listar vídeos curtidos ou não curtidos pela conta',
+        description: 'Mapeia para videos.list?myRating=like|dislike.',
+        security: comOAuth,
+        parameters: [
+          {
+            name: 'myRating', in: 'query', required: true,
+            schema: { type: 'string', enum: ['like', 'dislike'] }
+          },
+          ...parametrosListaUsuario
+        ],
+        responses: { '200': { description: 'Vídeos avaliados pela conta' }, ...errosUsuario }
+      }
+    },
+    '/api/users/me/playlists': {
+      get: {
+        tags: ['users'],
+        summary: 'Listar playlists criadas pela conta',
+        description: 'Mapeia para playlists.list?mine=true; pode incluir playlists privadas e não listadas.',
+        security: comOAuth,
+        parameters: parametrosListaUsuario,
+        responses: { '200': { description: 'Playlists da conta' }, ...errosUsuario }
+      }
+    },
+    '/api/users/me/activities': {
+      get: {
+        tags: ['users'],
+        summary: 'Listar atividades recentes da conta',
+        description: 'Mapeia para activities.list?mine=true.',
+        security: comOAuth,
+        parameters: parametrosListaUsuario,
+        responses: { '200': { description: 'Atividades recentes' }, ...errosUsuario }
+      }
+    },
+    '/api/users/me/uploads': {
+      get: {
+        tags: ['users'],
+        summary: 'Listar vídeos enviados pela conta',
+        description: 'Obtém a playlist de uploads de channels.list?mine=true e consulta playlistItems.list; exige OAuth.',
+        security: comOAuth,
+        parameters: parametrosListaUsuario,
+        responses: { '200': { description: 'Vídeos enviados, incluindo privados quando permitidos pelo OAuth' }, ...errosUsuario }
+      }
+    },
+    '/api/users/me/members': {
+      get: {
+        tags: ['users'],
+        summary: 'Listar membros pagantes do canal autenticado',
+        description: 'Mapeia para members.list?mode=all_current. Disponível somente a canais com Clubes dos canais ativo e autorização apropriada.',
+        security: comOAuth,
+        parameters: parametrosListaUsuario,
+        responses: { '200': { description: 'Membros atuais do canal' }, ...errosUsuario }
+      }
+    },
+    '/api/videos/{id}/comments': {
+      post: {
+        tags: ['users'],
+        summary: 'Publicar comentário em um vídeo',
+        description: 'Mapeia para commentThreads.insert.',
+        security: comOAuth,
+        parameters: [parametroId],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: {
+            type: 'object', required: ['textOriginal'],
+            properties: { textOriginal: { type: 'string', example: 'Ótimo vídeo!' } }
+          } } }
+        },
+        responses: { '201': { description: 'Comentário publicado' }, ...errosUsuario }
+      }
+    },
+    '/api/comments/{id}/replies': {
+      post: {
+        tags: ['users'],
+        summary: 'Responder a um comentário',
+        description: 'Mapeia para comments.insert; o ID no caminho é o ID do comentário pai.',
+        security: comOAuth,
+        parameters: [parametroId],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: {
+            type: 'object', required: ['textOriginal'],
+            properties: { textOriginal: { type: 'string', example: 'Obrigado pelo comentário!' } }
+          } } }
+        },
+        responses: { '201': { description: 'Resposta publicada' }, ...errosUsuario }
+      }
+    },
+    '/api/comments/{id}': {
+      put: {
+        tags: ['users'],
+        summary: 'Editar comentário',
+        description: 'Mapeia para comments.update.',
+        security: comOAuth,
+        parameters: [parametroId],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: {
+            type: 'object', required: ['textOriginal'],
+            properties: { textOriginal: { type: 'string' } }
+          } } }
+        },
+        responses: { '200': { description: 'Comentário atualizado' }, ...errosUsuario }
+      },
+      delete: {
+        tags: ['users'],
+        summary: 'Excluir comentário',
+        description: 'Mapeia para comments.delete.',
+        security: comOAuth,
+        parameters: [parametroId],
+        responses: { '204': { description: 'Comentário excluído' }, ...errosUsuario }
       }
     },
     '/api/videos': {
