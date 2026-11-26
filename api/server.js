@@ -11,6 +11,7 @@ configSwagger(app);
 
 // Rota de search
 app.get('/api/search', feedController.buscarVideos);
+app.get('/api/feed/popular', feedController.listarPopulares);
 
 
 app.listen(3000, '127.0.0.1', () => {

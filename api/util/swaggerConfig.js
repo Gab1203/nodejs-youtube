@@ -18,6 +18,12 @@ const swagger = {
         ],
         responses: { '200': { description: 'Resultados da busca' } }
       }
+    },
+    '/api/feed/popular': {
+      get: {
+        summary: 'Listar vídeos populares no Brasil',
+        responses: { '200': { description: 'Resultados de até cinco vídeos do ranking do YouTube' } }
+      }
     }
   }
 };

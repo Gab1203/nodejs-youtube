@@ -1,4 +1,4 @@
-async function buscarVideos(q) {
+async function consultarYouTube(recurso, parametros) {
   const chave = process.env.YOUTUBE_API_KEY;
 
   if (!chave || !chave.trim()) {
@@ -14,11 +14,10 @@ async function buscarVideos(q) {
     throw erro;
   }
 
-  const url = new URL('search', urlBase.trim());
-  url.searchParams.set('part', 'snippet');
-  url.searchParams.set('type', 'video');
-  url.searchParams.set('q', q);
-  url.searchParams.set('maxResults', '5');
+  const url = new URL(recurso, urlBase.trim());
+  for (const [nome, valor] of Object.entries(parametros)) {
+    url.searchParams.set(nome, valor);
+  }
 
   const resposta = await fetch(url, {
     headers: { 'x-goog-api-key': chave.trim() },
@@ -32,4 +31,23 @@ async function buscarVideos(q) {
   return resposta.json();
 }
 
-module.exports = { buscarVideos };
+function buscarVideos(q) {
+  return consultarYouTube('search', {
+    part: 'snippet',
+    type: 'video',
+    q,
+    maxResults: '5'
+  });
+}
+
+function listarPopulares() {
+  return consultarYouTube('videos', {
+    part: 'snippet,statistics',
+    chart: 'mostPopular',
+    // ranking do Brasil
+    regionCode: 'BR',
+    maxResults: '5'
+  });
+}
+
+module.exports = { buscarVideos, listarPopulares };

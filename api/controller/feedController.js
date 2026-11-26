@@ -10,16 +10,29 @@ async function buscarVideos(req, res) {
   try {
     return res.json(await feedService.buscarVideos(q.trim()));
   } catch (error) {
-    let status = 502;
-
-    if (error.name === 'TimeoutError') {
-      status = 504;
-    } else if (typeof error.status === 'number') {
-      status = error.status;
-    }
-
-    return res.status(status).json({ error: error.message });
+    return responderErro(error, res);
   }
 }
 
-module.exports = { buscarVideos };
+async function listarPopulares(_req, res) {
+  try {
+    return res.json(await feedService.listarPopulares());
+  } catch (error) {
+    return responderErro(error, res);
+  }
+}
+
+function responderErro(error, res) {
+  // Se a falha vier do YouTube, a rota responde com 502 por padrão.
+  let status = 502;
+
+  if (error.name === 'TimeoutError') {
+    status = 504;
+  } else if (typeof error.status === 'number') {
+    status = error.status;
+  }
+
+  return res.status(status).json({ error: error.message });
+}
+
+module.exports = { buscarVideos, listarPopulares };
