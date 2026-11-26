@@ -1,25 +1,17 @@
+process.loadEnvFile();
+
 const express = require('express');
-const swaggerUi = require('swagger-ui-express');
+
+const feedController = require('./controller/feedController');
+const configSwagger = require('./util/swaggerConfig');
 
 const app = express();
 
-app.get('/status', (_req, res) => {
-  res.json({ status: 'ok' });
-});
+configSwagger(app);
 
-const swagger = {
-  openapi: '3.0.3',
-  info: { title: 'nodejs-youtube', version: '1.0.0' },
-  paths: {'/status': {
-      get: {
-        summary: 'TESTE',
-        responses: { '200': { description: 'ATIVO' } }
-      }
-    }
-  }
-};
+// Rota de search
+app.get('/api/search', feedController.buscarVideos);
 
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swagger));
 
 app.listen(3000, '127.0.0.1', () => {
   console.log('ABERTO http://localhost:3000/docs/');
