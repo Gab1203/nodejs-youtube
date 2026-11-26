@@ -13,6 +13,7 @@ configSwagger(app);
 
 // Rota de search
 app.get('/api/search', feedController.buscarVideos);
+app.get('/api/feed/popular', feedController.listarPopulares);
 
 // Rotas de vídeos (YouTube Data API v3 - recurso videos)
 app.get('/api/videos/:id', videoController.buscarPorId);              // videos.list

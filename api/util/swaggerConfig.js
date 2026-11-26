@@ -192,6 +192,13 @@ const swagger = {
         },
         responses: { '204': { description: 'Avaliação registrada' }, ...errosComuns }
       }
+    },
+    '/api/feed/popular': {
+      get: {
+        tags: ['feeds'],
+        summary: 'Listar vídeos populares no Brasil',
+        responses: { '200': { description: 'Resultados de até cinco vídeos do ranking do YouTube' } }
+      }
     }
   }
 };
